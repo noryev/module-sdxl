@@ -2,7 +2,7 @@
   "machine": {
     "gpu": 1,
     "cpu": 1000,
-    "ram": 100
+    "ram": 1000
   },
   "job": {
     "APIVersion": "V1beta1",
@@ -11,41 +11,35 @@
         "Concurrency": 1
       },
       "Docker": {
-        "Entrypoint": [
-          "python", "-u", "sdxl_inference.py"
-        ],
-        "Image": "stabilityai/sdxl:latest"
+        "Image": "public.ecr.aws/lilypad-network/sdxl:v1.0-base-lilypad4@sha256:313d2e68124640ec7541287c9e7f7a7e2542e4e8ee2a55ef7908f6141565e828",
+        "EnvironmentVariables": [
+          "{{ if .Prompt }}PROMPT={{ .Prompt }}{{ end }}",
+          "{{ if .Seed }}SEED={{ .Seed }}{{ end }}",
+          "{{ if .Steps }}STEPS={{ .Steps }}{{ end }}",
+          "{{ if .Sampler }}SAMPLER={{ .Sampler }}{{ end }}",
+          "{{ if .Scheduler }}SCHEDULER={{ .Scheduler }}{{ end }}",
+          "{{ if .Size }}SIZE={{ .Size }}{{ end }}",
+          "{{ if .Batching }}BATCHING={{ .Batching }}{{ end }}",
+          "HF_HUB_OFFLINE=1"
+        ]
       },
       "Engine": "Docker",
       "Network": {
         "Type": "None"
       },
+      "Outputs": [
+        {
+          "Name": "outputs",
+          "Path": "/outputs"
+        }
+      ],
       "PublisherSpec": {
-        "Type": "IPFS"
+        "Type": "ipfs"
       },
       "Resources": {
         "GPU": "1"
       },
-      "Timeout": 3600,
-      "Verifier": "Noop",
-      "Inputs": [
-        {
-          "Name": "prompt",
-          "Description": "Text prompt for image generation",
-          "Default": "A beautiful landscape with mountains and a lake"
-        },
-        {
-          "Name": "num_images",
-          "Description": "Number of images to generate",
-          "Default": "1"
-        }
-      ],
-      "Outputs": [
-        {
-          "Name": "output",
-          "Path": "/outputs"
-        }
-      ]
+      "Timeout": 1800
     }
   }
 }
