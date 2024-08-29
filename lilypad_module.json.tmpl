@@ -7,7 +7,8 @@
     "job": {
         "APIVersion": "V1beta1",
         "Metadata": {
-            "Name": "sdxl-job"
+            "CreatedAt": "0001-01-01T00:00:00Z",
+            "Requester": {}
         },
         "Spec": {
             "Deal": {
@@ -17,15 +18,15 @@
                 "Entrypoint": null,
                 "EnvironmentVariables": [
                     {{ if .Prompt }}"PROMPT={{ .Prompt }}",{{ end }}
-                    {{ if .Steps }}"STEPS={{ .Steps }}",{{ end }}
                     {{ if .Seed }}"SEED={{ .Seed }}",{{ end }}
+                    {{ if .Steps }}"STEPS={{ .Steps }}",{{ end }}
                     {{ if .Sampler }}"SAMPLER={{ .Sampler }}",{{ end }}
                     {{ if .Scheduler }}"SCHEDULER={{ .Scheduler }}",{{ end }}
                     {{ if .Size }}"SIZE={{ .Size }}",{{ end }}
                     {{ if .Batching }}"BATCHING={{ .Batching }}",{{ end }}
                     "HF_HUB_OFFLINE=1"
                 ],
-                "Image": "public.ecr.aws/lilypad-network/sdxl:v1.0-base-lilypad4@sha256:313d2e68124640ec7541287c9e7f7a7e2542e4e8ee2a55ef7908f6141565e828"
+                "Image": "noryev/sdxl-pipeline:v1.0-base-lilypad4"
             },
             "Engine": "Docker",
             "Network": {
@@ -43,7 +44,10 @@
             "Resources": {
                 "GPU": "1"
             },
-            "Timeout": 1800
+            "Timeout": 1800,
+            "Wasm": {
+                "EntryModule": {}
+            }
         }
     }
 }
