@@ -1,24 +1,38 @@
-FROM nvidia/cuda:11.6.2-base-ubuntu20.04
+# Use a more recent CUDA base image
+FROM nvidia/cuda:11.8.0-base-ubuntu22.04
 
 ARG HUGGINGFACE_TOKEN
 
-RUN mkdir /app
+# Set up environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    python3.10 \
+    python3-pip \
+    git \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up working directory
 WORKDIR /app
 
-# Install lora and pre-cache stable diffusion xl 0.9 model to avoid re-downloading
-# it for every inference.
-ADD requirements.txt /app/requirements.txt
+# Copy requirements file
+COPY requirements.txt .
 
-RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update -y && apt-get install -y python3 python3-pip git libgl1-mesa-glx libglib2.0-0 && \
-    pip3 install -r requirements.txt && \
-    pip3 install huggingface_hub==0.16.4 && \
-    huggingface-cli login --token $HUGGINGFACE_TOKEN && \
-    python3 -c 'from diffusers import DiffusionPipeline; import torch; DiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-xl-base-0.9", torch_dtype=torch.float16, use_safetensors=True, variant="fp16")' && \
-    rm /root/.cache/huggingface/token
+# Install Python dependencies
+RUN pip3 install --no-cache-dir -r requirements.txt \
+    && pip3 install --no-cache-dir huggingface_hub==0.16.4
 
-# TODO: cache:
-# pipe.unet = torch.compile(pipe.unet, mode="reduce-overhead", fullgraph=True)
+# Login to Hugging Face and download the model
+RUN python3 -c "from huggingface_hub import login; login('${HUGGINGFACE_TOKEN}')" \
+    && python3 -c "from diffusers import DiffusionPipeline; import torch; DiffusionPipeline.from_pretrained('stabilityai/stable-diffusion-xl-base-0.9', torch_dtype=torch.float16, use_safetensors=True, variant='fp16')" \
+    && rm -f ~/.huggingface/token
 
-ADD inference.py /app/inference.py
+# Copy the inference script
+COPY inference.py .
+
+# Set the entrypoint
 ENTRYPOINT ["python3", "/app/inference.py"]
